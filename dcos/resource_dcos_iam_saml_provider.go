@@ -94,7 +94,7 @@ func validateProviderID(i interface{}, k string) (s []string, es []error) {
 }
 
 func resourceDcosSAMLProviderCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	providerId := d.Get("provider_id").(string)
@@ -121,7 +121,7 @@ func resourceDcosSAMLProviderCreate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceDcosSAMLProviderRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	providerId := d.Get("provider_id").(string)
@@ -178,7 +178,7 @@ func resourceDcosSAMLProviderRead(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceDcosSAMLProviderUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	var iamsamlProviderConfig dcos.IamsamlProviderConfig
@@ -206,7 +206,7 @@ func resourceDcosSAMLProviderUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceDcosSAMLProviderDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	providerId := d.Get("provider_id").(string)

@@ -51,7 +51,7 @@ func resourceDcosIAMGroup() *schema.Resource {
 }
 
 func resourceDcosIAMGroupCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	gid := d.Get("gid").(string)
@@ -74,7 +74,7 @@ func resourceDcosIAMGroupCreate(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceDcosIAMGroupRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	gid := d.Id()
@@ -100,7 +100,7 @@ func resourceDcosIAMGroupRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceDcosIAMGroupUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	gid := d.Id()
@@ -116,7 +116,7 @@ func resourceDcosIAMGroupUpdate(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceDcosIAMGroupDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	resp, err := client.IAM.DeleteGroup(ctx, d.Id())

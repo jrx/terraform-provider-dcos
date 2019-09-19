@@ -58,7 +58,7 @@ func encodePath(pathToSecret string) string {
 }
 
 func resourceDcosSecretCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	secretsV1Secret := dcos.SecretsV1Secret{}
@@ -89,7 +89,7 @@ func resourceDcosSecretCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceDcosSecretRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	store := d.Get("store").(string)
@@ -120,7 +120,7 @@ func generateID(store string, pathToSecret string) string {
 }
 
 func resourceDcosSecretUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	secretsV1Secret := dcos.SecretsV1Secret{}
@@ -140,7 +140,7 @@ func resourceDcosSecretUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceDcosSecretDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	pathToSecret := d.Get("path").(string)

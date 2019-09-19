@@ -54,7 +54,7 @@ func resourceDcosIAMGrantUser() *schema.Resource {
 }
 
 func resourceDcosIAMGrantUserCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	uid := d.Get("uid").(string)
@@ -110,7 +110,7 @@ func inPermissions(permissions dcos.IamUserPermissions, rid string, action strin
 }
 
 func resourceDcosIAMGrantUserRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	uid := d.Get("uid").(string)
@@ -139,7 +139,7 @@ func resourceDcosIAMGrantUserRead(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceDcosIAMGrantUserDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	uid := d.Get("uid").(string)

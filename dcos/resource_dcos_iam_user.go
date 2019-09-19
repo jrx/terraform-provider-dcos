@@ -50,7 +50,7 @@ func resourceDcosIAMUser() *schema.Resource {
 }
 
 func resourceDcosIAMUserCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	uid := d.Get("uid").(string)
@@ -74,7 +74,7 @@ func resourceDcosIAMUserCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceDcosIAMUserRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	uid := d.Id()
@@ -100,7 +100,7 @@ func resourceDcosIAMUserRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceDcosIAMUserUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	uid := d.Id()
@@ -127,7 +127,7 @@ func resourceDcosIAMUserUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceDcosIAMUserDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*dcos.APIClient)
+	client := meta.(*ProviderState).Client
 	ctx := context.TODO()
 
 	resp, err := client.IAM.DeleteUser(ctx, d.Id())
