@@ -49,6 +49,14 @@ func Provider() terraform.ResourceProvider {
 				Default:     "",
 				Description: "Password to login with",
 			},
+
+			"cli_version": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     "",
+				Description: "The DC/OS cli version to use",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			// "dcos_services_single_container": resourceDcosServicesSingleContainer(),
@@ -64,6 +72,7 @@ func Provider() terraform.ResourceProvider {
 			"dcos_package":             resourceDcosPackage(),
 			"dcos_package_repo":        resourceDcosPackageRepo(),
 			"dcos_secret":              resourceDcosSecret(),
+			"dcos_cli":                 resourceDcosCLI(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"dcos_base_url":        dataSourceDcosBaseURL(),
@@ -149,7 +158,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		config.SetACSToken(authToken.Token)
 	}
 
-	cli, err := util.CreateCliWrapper(".terraform/dcos/sandbox", client)
+	cli, err := util.CreateCliWrapper(".terraform/dcos/sandbox", client, d.Get("cli_version").(string))
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create cli wrapper: %s", err.Error())
 	}
