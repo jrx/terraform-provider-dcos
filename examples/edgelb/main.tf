@@ -6,40 +6,40 @@ resource "tls_private_key" "edgelb_service_account_private_key" {
 }
 
 resource "dcos_security_org_service_account" "edgelb_service_account" {
-  uid         = "edge-lb-principal"
+  uid         = "edgelb-principal"
   description = "Edge-LB service account"
   public_key  = "${tls_private_key.edgelb_service_account_private_key.public_key_pem}"
 }
 
 locals {
   edgelb_principal_grants = [
+    "dcos:adminrouter:ops:ca:rw",
+    "dcos:adminrouter:ops:ca:ro",
     "dcos:adminrouter:service:marathon",
     "dcos:adminrouter:package",
     "dcos:adminrouter:service:edgelb",
     "dcos:service:marathon:marathon:services:/dcos-edgelb",
     "dcos:mesos:master:endpoint:path:/api/v1",
     "dcos:mesos:master:endpoint:path:/api/v1/scheduler",
-    "dcos:mesos:master:framework:principal:edge-lb-principal",
+    "dcos:mesos:master:framework:principal:edgelb",
     "dcos:mesos:master:framework:role",
-    "dcos:mesos:master:reservation:principal:edge-lb-principal",
+    "dcos:mesos:master:reservation:principal:edgelb",
     "dcos:mesos:master:reservation:role",
-    "dcos:mesos:master:volume:principal:edge-lb-principal",
+    "dcos:mesos:master:volume:principal:edgelb",
     "dcos:mesos:master:volume:role",
     "dcos:mesos:master:task:user:root",
     "dcos:mesos:master:task:app_id",
+    "dcos:secrets:default:/dcos-edgelb/*",
+    "dcos:secrets:list:default:/dcos-edgelb/*",
+    "dcos:adminrouter:service:dcos-edgelb/pools/auto-default",
   ]
 }
 
-# resource "dcos_security_org_user_grant" "edgelb" {
-#   count    = "${length(local.edgelb_principal_grants)}"
-#   uid      = "${dcos_security_org_service_account.edgelb_service_account.uid}"
-#   resource = "${element(local.edgelb_principal_grants, count.index)}"
-#   action   = "full"
-# }
-
-resource "dcos_security_org_group_user" "edgelb" {
-  uid = "${dcos_security_org_service_account.edgelb_service_account.uid}"
-  gid = "superusers"
+resource "dcos_security_org_user_grant" "edgelb" {
+  count    = "${length(local.edgelb_principal_grants)}"
+  uid      = "${dcos_security_org_service_account.edgelb_service_account.uid}"
+  resource = "${element(local.edgelb_principal_grants, count.index)}"
+  action   = "full"
 }
 
 locals {
@@ -47,24 +47,24 @@ locals {
     scheme         = "RS256"
     uid            = "${dcos_security_org_service_account.edgelb_service_account.uid}"
     private_key    = "${tls_private_key.edgelb_service_account_private_key.private_key_pem}"
-    login_endpoint = "https://master.mesos/acs/api/v1/auth/login"
+    login_endpoint = "https://leader.mesos/acs/api/v1/auth/login"
   }
 }
 
 resource "dcos_security_secret" "edgelb-secret" {
-  path = "dcos-edgelb/edge-lb-secret"
+  path = "dcos-edgelb/secret"
 
   value = "${jsonencode(local.edgelb_secret)}"
 }
 
 resource "dcos_package_repo" "edgelb" {
   name = "edgelb"
-  url  = "https://downloads.mesosphere.com/edgelb/v1.3.1/assets/stub-universe-edgelb.json"
+  url  = "https://downloads.mesosphere.com/edgelb/v1.5.0/assets/stub-universe-edgelb.json"
 }
 
 resource "dcos_package_repo" "edgelb-pool" {
   name = "edgelb-pool"
-  url  = "https://downloads.mesosphere.com/edgelb-pool/v1.3.1/assets/stub-universe-edgelb-pool.json"
+  url  = "https://downloads.mesosphere.com/edgelb-pool/v1.5.0/assets/stub-universe-edgelb-pool.json"
 }
 
 data "dcos_package_version" "edgelb" {
@@ -72,23 +72,19 @@ data "dcos_package_version" "edgelb" {
   name     = "edgelb"
 }
 
-#
-# // Provide some package configuration for the version you have selected
 data "dcos_package_config" "edgelb" {
   version_spec = "${data.dcos_package_version.edgelb.spec}"
 
-  // Each section installs configuration values to a designated
-  // location in the configuration.
   section {
     path = "service"
 
     map {
+      name = ""
       secretName    = "${dcos_security_secret.edgelb-secret.path}"
       principal     = "${dcos_security_org_service_account.edgelb_service_account.uid}"
       mesosProtocol = "https"
-
-      # mesosAuthNZ   = true
-      # logLevel = "info"
+      mesosAuthNZ = "true"
+      logLevel = "info"
     }
   }
 }
@@ -100,16 +96,7 @@ resource "dcos_package" "edgelb" {
   wait = true
 }
 
-data "dcos_token" "current" {}
-
-data "dcos_base_url" "current" {}
-
-provider "marathon" {
-  dcos_token = "${data.dcos_token.current.token}"
-  url        = "${data.dcos_base_url.current.url}/service/marathon"
-}
-
-resource "marathon_app" "edgelb-ping" {
+resource "dcos_marathon_app" "edgelb-ping" {
   app_id    = "/ping"
   cpus      = 0.1
   mem       = 32
@@ -146,8 +133,22 @@ EOF
   require_ports = true
 }
 
+locals {
+  edgelb_principal_grants_ping = [
+    "dcos:adminrouter:service:dcos-edgelb/pools/ping-lb",
+  ]
+}
+
+resource "dcos_security_org_user_grant" "edgelb-pool-ping" {
+  count    = "${length(local.edgelb_principal_grants_ping)}"
+  uid      = "${dcos_security_org_service_account.edgelb_service_account.uid}"
+  resource = "${element(local.edgelb_principal_grants_ping, count.index)}"
+  action   = "full"
+}
+
 resource "dcos_edgelb_v2_pool" "edgelb-ping" {
   name       = "ping-lb"
+  namespace  = "edgelb"
   pool_count = 1
   mem        = 128
 
@@ -168,5 +169,8 @@ resource "dcos_edgelb_v2_pool" "edgelb-ping" {
     }
   }
 
-  depends_on = ["dcos_package.edgelb", "marathon_app.edgelb-ping"]
+  depends_on = [
+    "dcos_package.edgelb",
+    "dcos_security_org_user_grant.edgelb-pool-ping", "dcos_marathon_app.edgelb-ping",
+  ]
 }
